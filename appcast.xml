@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<rss version="2.0" xmlns:sparkle="http://www.andymatuschak.org/xml-namespaces/sparkle"  xmlns:dc="http://purl.org/dc/elements/1.1/">
+  <channel>
+    <title>Sketch Inker8</title>
+    <link>https://raw.githubusercontent.com/inker8/sketch-plugin/master/appcast.xml</link>
+    <description>Share spec and icons to developers and teammates via one click.</description>
+    <language>en</language>
+
+  </channel>
+</rss>

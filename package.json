@@ -1,0 +1,27 @@
+{
+  "name": "inker8",
+  "version": "0.0.0",
+  "engines": {
+    "sketch": ">=3.0"
+  },
+  "skpm": {
+    "name": "inker8",
+    "manifest": "src/manifest.json",
+    "main": "plugin.sketchplugin",
+    "assets": [
+      "assets/**/*"
+    ]
+  },
+  "scripts": {
+    "build": "rm -rf plugin.sketchplugin && skpm-build",
+    "watch": "skpm-build --watch",
+    "start": "skpm-build --watch --run",
+    "postinstall": "npm run build && skpm-link",
+    "preversion": "npm run build && node tools/build.js"
+  },
+  "devDependencies": {
+    "@skpm/builder": "^0.5.2",
+    "@types/node": "^10.9.3"
+  },
+  "author": "zaaack <zaaack@qq.com>"
+}
