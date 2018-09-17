@@ -7,6 +7,19 @@
     <language>en</language>
 
     <item>
+      <title>Version 0.1.1</title>
+      <description>
+        <![CDATA[
+          <ul>
+            <li>Improve performance</li>
+          </ul>
+        ]]>
+      </description>
+      <enclosure url="https://github.com/inker8/sketch-plugin/raw/v0.1.1/inker8.sketchplugin.zip" sparkle:version="0.1.1" type="application/octet-stream" />
+    </item>
+    
+
+    <item>
       <title>Version 0.1.0</title>
       <description>
         <![CDATA[
