@@ -1,6 +1,9 @@
 const child = require('child_process')
 const fs = require('fs')
-let exec = child.execSync
+let exec = (cmd, ...args) => {
+  console.log('Exec', cmd)
+  child.execSync(cmd, ...args)
+}
 
 { // zip plugin
   exec(`mv ./plugin.sketchplugin ./inker8.sketchplugin`)

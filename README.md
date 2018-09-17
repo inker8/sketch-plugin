@@ -15,4 +15,4 @@ A sketch plugin to export design spec and icons via one click.
 ## Install
 
 1. [Download the ZIP file](https://github.com/inker8/sketch-plugin/raw/master/inker8.sketchplugin.zip) and unzip
-2. Open Sketch Measure.sketchplugin
+2. Open plugin.sketchplugin
