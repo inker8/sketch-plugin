@@ -7,6 +7,19 @@
     <language>en</language>
 
     <item>
+      <title>Version 0.1.3</title>
+      <description>
+        <![CDATA[
+          <ul>
+            <li>"Add export wizard\nAdd auto compress"</li>
+          </ul>
+        ]]>
+      </description>
+      <enclosure url="https://github.com/inker8/sketch-plugin/raw/v0.1.3/inker8.sketchplugin.zip" sparkle:version="0.1.3" type="application/octet-stream" />
+    </item>
+    
+
+    <item>
       <title>Version 0.1.2</title>
       <description>
         <![CDATA[
