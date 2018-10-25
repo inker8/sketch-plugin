@@ -1,6 +1,6 @@
 {
   "name": "inker8",
-  "version": "0.1.3",
+  "version": "0.1.2",
   "engines": {
     "sketch": ">=3.0"
   },
@@ -23,5 +23,8 @@
     "@skpm/builder": "^0.5.2",
     "@types/node": "^10.9.3"
   },
-  "author": "zaaack <zaaack@qq.com>"
+  "author": "zaaack <zaaack@qq.com>",
+  "dependencies": {
+    "regenerator-runtime": "^0.12.1"
+  }
 }

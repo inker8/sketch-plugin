@@ -3,7 +3,10 @@
 // http://bang590.github.io/JSPatchConvertor/
 // https://github.com/skpm/skpm/issues/106#issuecomment-355958851
 // https://medium.com/sketch-app-sources/sketch-plugin-snippets-for-plugin-developers-e9e1d2ab6827
-
+global.regeneratorRuntime = require('regenerator-runtime')
+global.window = global.window || {}
+global.setTimeout = global.setTimeout || (fn=> fn())
+var Compress = require('./compress')
 
 var writeTextToFile = function(text, filePath) {
   // var t = [NSString stringWithFormat:@"%@", text],
@@ -65,7 +68,7 @@ var removeFileOrFolder = function(filePath) {
 //   return str
 // }
 
-function getDbJson(layers) {
+async function getDbJson(layers) {
   let tempFolder = createTempFolderNamed()
   let DOM = require('sketch/dom')
   DOM.export(layers, {
@@ -73,10 +76,25 @@ function getDbJson(layers) {
     output: tempFolder,
     compact: true,
   })
-  let svgList = layers.map(l => ({
-    svg: readTextFromFile(tempFolder + '/' + l.name + '.svg'),
-    name: l.name,
-  })).filter(s => s.svg && s.svg !== 'null' && s.name)
+
+  let svgList = await Promise.all(
+    layers.map(async l => {
+      let svg = readTextFromFile(tempFolder + '/' + l.name + '.svg')
+      try {
+        let start = Date.now()
+        let res = await Compress.compressSVG(svg)
+        console.log(`compress:${l.name}`, (Date.now() - start) / 1000 + 's')
+        return {
+          svg: res.svg,
+          name: l.name,
+        }
+      } catch(e) {
+        console.error('compressSVG', e.message, e)
+        console.log('compressSVG', e.message, e)
+      }
+    })
+  )
+  svgList = svgList.filter(s => s.svg && s.svg !== 'null' && s.name)
   return `
     window['__ARTBOARDS__'] = ${JSON.stringify(svgList)}
   `
@@ -115,14 +133,13 @@ function copy(src, dist) {
   fileManager.copyItemAtPath_toPath_error(src, dist, null)
 }
 
-function exportLayers(name, layers) {
-  let dbjs = getDbJson(layers)
-  console.log('dbjs', dbjs)
-  let tplPath = getPluginTemplatePath()
+async function exportLayers(name, layers) {
   let savePath = getSavePath(name)
   if (!savePath) {
     return
   }
+  let dbjs = await getDbJson(layers)
+  let tplPath = getPluginTemplatePath()
   var fileManager = NSFileManager.defaultManager()
   if (fileManager.fileExistsAtPath(savePath)) {
     removeFileOrFolder(savePath)
@@ -139,17 +156,17 @@ function getDocName() {
   var fileName = context.document.displayName().stringByDeletingPathExtension();
   return fileName
 }
-export function exportSelected(ctx) {
+export async function exportSelected(ctx) {
     context = ctx
 
     var sketch = require('sketch')
 
     var document = sketch.getSelectedDocument()
 
-    exportLayers(getDocName(), document.selectedLayers.layers)
+    await exportLayers(getDocName(), document.selectedLayers.layers)
 }
 
-export function exportPage(ctx) {
+export async function exportPage(ctx) {
   context = ctx
 
   var sketch = require('sketch')
@@ -157,5 +174,5 @@ export function exportPage(ctx) {
   var document = sketch.getSelectedDocument()
   var page = document.pages.filter(p => p.selected)[0]
 
-  exportLayers(getDocName(), page.layers)
+  await exportLayers(getDocName(), page.layers)
 }
