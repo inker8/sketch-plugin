@@ -3,10 +3,8 @@
 // http://bang590.github.io/JSPatchConvertor/
 // https://github.com/skpm/skpm/issues/106#issuecomment-355958851
 // https://medium.com/sketch-app-sources/sketch-plugin-snippets-for-plugin-developers-e9e1d2ab6827
-global.regeneratorRuntime = require('regenerator-runtime')
-global.window = global.window || {}
-global.setTimeout = global.setTimeout || (fn=> fn())
-var Compress = require('./compress')
+import { getResourcePath } from './utils'
+import * as Compress from './compress'
 
 var writeTextToFile = function(text, filePath) {
   // var t = [NSString stringWithFormat:@"%@", text],
@@ -67,6 +65,135 @@ var removeFileOrFolder = function(filePath) {
 //   var str = NSString.stringWithContentsOfFile_encoding_error(path, NSUTF8StringEncoding, null);
 //   return str
 // }
+// let PanelInfo = null
+// export async function compressImg(url, props) {
+//   console.log('compressImg')
+//   return new Promise(
+//     (res, rej) => {
+//       PanelInfo = createPanel({
+//         script: `
+//         function(id) {
+//           try {
+//             let url = "${url}"
+//             const { maxSize = 400, crop = 'contain' } = ${JSON.stringify(props)}
+//             let img = new Image()
+//             img.onload = () => {
+//               try {
+//                 let rate = maxSize / Math.max(img.width, img.height)
+//                 let width = img.width * rate | 0
+//                 let height = img.height * rate | 0
+//                 if (crop === 'cover') {
+//                   rate = maxSize / Math.min(img.width, img.height)
+//                   width = Math.min(img.width * rate, maxSize)
+//                   height = Math.min(img.height * rate, maxSize)
+//                 }
+//                 let canvas = document.createElement('canvas')
+//                 canvas.width = width
+//                 canvas.height = height
+//                 let ctx = canvas.getContext('2d')
+//                 ctx.drawImage(img, 0, 0, canvas.width, img.height / img.width * canvas.width)
+//                 SMAction('submit', {
+//                   id: id,
+//                   error: null,
+//                   data: canvas.toDataURL('image/jpeg', .7),
+//                 })
+//                 console.log('send')
+//               } catch (error) {
+//                 SMAction('submit', {
+//                   id: id,
+//                   error: error,
+//                   data: url,
+//                 })
+//                 console.log('err', error.message)
+//               }
+//             }
+//             img.onerror = err => {
+//               SMAction('submit', {
+//                   id: id,
+//                   error: error.message,
+//                 data: url,
+//               })
+//               console.log('err', err)
+//             }
+//             img.src = url
+//           } catch (e) {
+//               console.log('err', e)
+//             SMAction('submit', {
+//               id: id,
+//               error: e.message,
+//               data: url,
+//             })
+//           }
+//         }
+//         `,
+//         callback: data => {
+//           console.log('compressImg callback', data.id)
+//           setTimeout(() => {
+//             if (data.error) {
+//               console.error('compressImg error', data.error)
+//               res(url)
+//             } else {
+//               res(data.data)
+//             }
+//           }, 500)
+//         }
+//       })
+//     }
+//   )
+// }
+
+function _resizeNSImage(sourceImage, newSize) {
+  if (!sourceImage.isValid()) {
+    return null
+  }
+
+  var rep = NSBitmapImageRep.alloc().initWithBitmapDataPlanes_pixelsWide_pixelsHigh_bitsPerSample_samplesPerPixel_hasAlpha_isPlanar_colorSpaceName_bytesPerRow_bitsPerPixel(null, newSize.width, newSize.height, 8, 4, true, false, NSCalibratedRGBColorSpace, 0, 0);
+  rep.setSize(newSize);
+
+  NSGraphicsContext.saveGraphicsState();
+  NSGraphicsContext.setCurrentContext(NSGraphicsContext.graphicsContextWithBitmapImageRep(rep));
+  sourceImage.drawInRect_fromRect_operation_fraction(NSMakeRect(0, 0, newSize.width, newSize.height), NSZeroRect, NSCompositeCopy, 1.0);
+  NSGraphicsContext.restoreGraphicsState();
+
+  var newImage = NSImage.alloc().initWithSize(newSize);
+  newImage.addRepresentation(rep);
+  return newImage;
+}
+function compressImg(url, props) {
+  try {
+    var imageData = NSData.alloc().initWithBase64EncodedString_options(url.split(',', 2)[1], NSDataBase64DecodingIgnoreUnknownCharacters)
+
+    var image = NSImage.alloc().initWithData(imageData);
+
+    var bitmapRep = image.representations().objectAtIndex(0)
+    var data = bitmapRep.representationUsingType_properties(NSJPEGFileType, null);
+
+    var size = {
+      width: bitmapRep.pixelsWide(),
+      height: bitmapRep.pixelsHigh(),
+    }
+    props.maxSize = props.maxSize || 400
+    var scale = Math.min(props.maxSize / size.width, props.maxSize / size.height)
+    if (scale >= 1) return url
+    var newSize = NSZeroSize
+    newSize.width = (size.width * scale) | 0
+    newSize.height = (size.height * scale) | 0
+
+
+    var smallImage = _resizeNSImage(image, newSize)
+    var smallBitmapRep = smallImage.representations().objectAtIndex(0);
+
+
+    var dict = NSDictionary.dictionaryWithObject_forKey(NSNumber.numberWithFloat(0.5), NSImageCompressionFactor);
+    var data5 = smallBitmapRep.representationUsingType_properties(NSJPEGFileType, dict);
+
+    let newUrl = data5.base64EncodedStringWithOptions(NSDataBase64Encoding64CharacterLineLength)
+    return `data:image/jpeg;base64,${newUrl}`
+  } catch(e) {
+    console.error('compressImg', e.message, e)
+    return url
+  }
+}
 
 async function getDbJson(layers) {
   let tempFolder = createTempFolderNamed()
@@ -77,24 +204,31 @@ async function getDbJson(layers) {
     compact: true,
   })
 
-  let svgList = await Promise.all(
-    layers.map(async l => {
-      let svg = readTextFromFile(tempFolder + '/' + l.name + '.svg')
-      try {
-        let start = Date.now()
-        let res = await Compress.compressSVG(svg)
-        console.log(`compress:${l.name}`, (Date.now() - start) / 1000 + 's')
-        return {
-          svg: res.svg,
-          name: l.name,
-        }
-      } catch(e) {
-        console.error('compressSVG', e.message, e)
-        console.log('compressSVG', e.message, e)
-      }
-    })
-  )
+  let svgList = []
+
+  for (const l of layers) {
+    let svg = readTextFromFile(tempFolder + '/' + l.name + '.svg')
+    try {
+      let start = Date.now()
+      let res = await Compress.compressSVG(svg, compressImg, { sync: true, thumbnail: false })
+      // let res = await Compress.compressSVG(svg, void 0, { sync: true, thumbnail: false })
+      console.log(`compress:${l.name}`, (Date.now() - start) / 1000 + 's')
+      svgList.push({
+        svg: res.svg,
+        name: l.name,
+      })
+    } catch(e) {
+      console.error('compressSVG', e.message, e)
+      console.log('compressSVG', e.message, e)
+    }
+  }
+
+  // await Promise.all(
+  //   layers.map(async l => {
+  //   })
+  // )
   svgList = svgList.filter(s => s.svg && s.svg !== 'null' && s.name)
+  console.log('getDbJSon')
   return `
     window['__ARTBOARDS__'] = ${JSON.stringify(svgList)}
   `
@@ -123,8 +257,9 @@ function getSavePath(name) {
   return savePath
 }
 
+
 function getPluginTemplatePath() {
-  return context.scriptPath.split(/\/|\\/g).slice(0, -2).concat('Resources/static-plugin').join('/')
+  return getResourcePath() + '/static-plugin'
 }
 
 function copy(src, dist) {
@@ -138,15 +273,19 @@ async function exportLayers(name, layers) {
   if (!savePath) {
     return
   }
-  let dbjs = await getDbJson(layers)
-  let tplPath = getPluginTemplatePath()
-  var fileManager = NSFileManager.defaultManager()
-  if (fileManager.fileExistsAtPath(savePath)) {
-    removeFileOrFolder(savePath)
-    console.log('removed', savePath)
+  try {
+    let dbjs = await getDbJson(layers)
+    let tplPath = getPluginTemplatePath()
+    var fileManager = NSFileManager.defaultManager()
+    if (fileManager.fileExistsAtPath(savePath)) {
+      removeFileOrFolder(savePath)
+      console.log('removed', savePath)
+    }
+    copy(tplPath, savePath)
+    writeTextToFile(dbjs, savePath + '/dist/db.js')
+  } catch (e) {
+    console.error('copy and write', e)
   }
-  copy(tplPath, savePath)
-  writeTextToFile(dbjs, savePath + '/dist/db.js')
 }
 
 let context = null
@@ -157,13 +296,19 @@ function getDocName() {
   return fileName
 }
 export async function exportSelected(ctx) {
+  try {
     context = ctx
+    global.context = context
 
     var sketch = require('sketch')
 
     var document = sketch.getSelectedDocument()
 
     await exportLayers(getDocName(), document.selectedLayers.layers)
+  } catch (error) {
+    console.error(error);
+
+  }
 }
 
 export async function exportPage(ctx) {
