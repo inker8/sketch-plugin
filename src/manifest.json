@@ -5,28 +5,22 @@
   "identifier": "com.inker8.sketch",
   "appcast": "https://raw.githubusercontent.com/inker8/sketch-plugin/master/appcast.xml",
   "homepage": "http://github.com/inker8/sketch-plugin",
-  "version": "2.7.5",
-  "description" : "Make it a fun to create spec for developers and teammates",
-  "authorEmail" : "zaaack@qq.com",
-  "commands": [
-    {
-      "name": "Export selected artboards",
-      "identifier": "exportSelected",
-      "handler": "exportSelected",
-      "script": "./main.js"
-    },
-    {
-      "name": "Export current page",
-      "identifier": "exportPage",
-      "handler": "exportPage",
-      "script": "./main.js"
-    }
-  ],
+  "version": "0.1.4",
+  "description": "Make it a fun to create spec for developers and teammates",
+  "authorEmail": "zaaack@qq.com",
+  "commands": [{
+    "name": "Export selected artboards",
+    "identifier": "exportSelected",
+    "handler": "exportSelected",
+    "script": "./main.js"
+  }, {
+    "name": "Export current page",
+    "identifier": "exportPage",
+    "handler": "exportPage",
+    "script": "./main.js"
+  }],
   "menu": {
     "title": "inker8",
-    "items": [
-      "exportSelected",
-      "exportPage"
-    ]
+    "items": ["exportSelected", "exportPage"]
   }
 }

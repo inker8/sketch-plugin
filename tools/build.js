@@ -5,6 +5,19 @@ let exec = (cmd, ...args) => {
   child.execSync(cmd, ...args)
 }
 
+
+{
+  function updateManifest(file) {
+    let version = process.env.npm_package_version
+    let manifest = JSON.parse(fs.readFileSync(file, 'utf8'))
+    manifest.version = version
+    fs.writeFileSync(file, JSON.stringify(manifest, null, 2))
+  }
+
+  updateManifest('./src/manifest.json')
+  updateManifest('./plugin.sketchplugin/Contents/Sketch/manifest.json')
+}
+
 { // zip plugin
   exec(`mv ./plugin.sketchplugin ./inker8.sketchplugin`)
   try {
