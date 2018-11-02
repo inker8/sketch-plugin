@@ -6,6 +6,19 @@
     <description>Share spec and icons to developers and teammates via one click.</description>
     <language>en</language>
 
+    <item>
+      <title>Version 0.1.6</title>
+      <description>
+        <![CDATA[
+          <ul>
+            <li>Fix cannot switch artboards</li>
+          </ul>
+        ]]>
+      </description>
+      <enclosure url="https://github.com/inker8/sketch-plugin/raw/v0.1.6/inker8.sketchplugin.zip" sparkle:version="0.1.6" type="application/octet-stream" />
+    </item>
+    
+
 
     <item>
       <title>Version 0.1.4</title>
